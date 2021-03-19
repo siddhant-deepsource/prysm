@@ -6,6 +6,7 @@ import (
 	types "github.com/prysmaticlabs/eth2-types"
 	"github.com/prysmaticlabs/prysm/shared/bytesutil"
 	"github.com/prysmaticlabs/prysm/shared/params"
+	//"github.com/prysmaticlabs/prysm/shared/progressutil"
 	bolt "go.etcd.io/bbolt"
 	"go.opencensus.io/trace"
 )
@@ -30,13 +31,17 @@ func (s *Store) PruneAttestations(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	for _, k := range pubkeys {
+	//bar := progressutil.InitializeProgressBar(
+	//	len(pubkeys), "Pruning old, validator slashing protection histories for each public key",
+	//)
+	for i, k := range pubkeys {
 		err = s.update(func(tx *bolt.Tx) error {
 			bucket := tx.Bucket(pubKeysBucket)
 			pkBucket := bucket.Bucket(k)
 			if pkBucket == nil {
 				return nil
 			}
+			log.Infof("Pruning pubkey %d", i)
 			if err := pruneSourceEpochsBucket(pkBucket); err != nil {
 				return err
 			}
@@ -48,6 +53,9 @@ func (s *Store) PruneAttestations(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		//if err = bar.Add(1); err != nil {
+		//	return err
+		//}
 	}
 	return nil
 }
@@ -95,8 +103,10 @@ func pruneBucket(bkt *bolt.Bucket) error {
 	for k, _ := c.First(); k != nil; k, _ = c.Next() {
 		targetEpoch := bytesutil.BytesToEpochBigEndian(k)
 		if targetEpoch >= upperBounds {
+			//log.Infof("Target epoch %d > upper bound %d", targetEpoch, upperBounds)
 			return nil
 		}
+		//log.Warnf("Target epoch %d below upper bound, DELETING", targetEpoch)
 		if err := bkt.Delete(k); err != nil {
 			return err
 		}

@@ -17,6 +17,7 @@ go_library(
         "migration_source_target_epochs_bucket.go",
         "proposer_protection.go",
         "prune_attester_protection.go",
+        "recreate.go",
         "schema.go",
     ],
     importpath = "github.com/prysmaticlabs/prysm/validator/db/kv",

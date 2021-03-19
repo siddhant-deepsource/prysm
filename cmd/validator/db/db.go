@@ -17,6 +17,20 @@ var Commands = &cli.Command{
 	Usage:    "defines commands for interacting with the Prysm validator database",
 	Subcommands: []*cli.Command{
 		{
+			Name:        "recreate",
+			Description: `recreate a realistic validator DB`,
+			Flags: cmd.WrapFlags([]cli.Flag{
+				cmd.DataDirFlag,
+			}),
+			Before: tos.VerifyTosAcceptedOrPrompt,
+			Action: func(cliCtx *cli.Context) error {
+				if err := validatordb.Recreate(cliCtx); err != nil {
+					log.Fatalf("Could not recreate database: %v", err)
+				}
+				return nil
+			},
+		},
+		{
 			Name:        "restore",
 			Description: `restores a database from a backup file`,
 			Flags: cmd.WrapFlags([]cli.Flag{
